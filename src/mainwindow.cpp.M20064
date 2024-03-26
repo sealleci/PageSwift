@@ -1,0 +1,226 @@
+#include "mainwindow.h"
+#include "ui_mainwindow.h"
+#include <QButtonGroup>
+#include <QTableWidget>
+#include <QFileDialog>
+#include <iostream>
+#include <vector>
+#include "vir_mem.h"
+#include "str_tools.h"
+#include "tinyjson.hpp"
+#include "json_oper.h"\
+
+MainWindow::MainWindow(QWidget *parent) :
+    QMainWindow(parent),
+    ui(new Ui::MainWindow)
+{
+    ui->setupUi(this);
+
+    dps.resize(thCount);
+    thLookupTbl.resize(thCount);
+
+    thBtnGrp->addButton(ui->addThreadBtn_1,1);
+    thBtnGrp->addButton(ui->addThreadBtn_2,2);
+    thBtnGrp->addButton(ui->addThreadBtn_3,3);
+    thBtnGrp->addButton(ui->addThreadBtn_4,4);
+    connect(thBtnGrp,SIGNAL(buttonClicked(int)),this,SLOT(buttonJudge(int)));
+
+    setWindowFlags(windowFlags()& ~Qt::WindowMaximizeButtonHint);
+    setFixedSize(this->width(), this->height());
+}
+
+MainWindow::~MainWindow()
+{
+    delete ui;
+}
+
+void MainWindow::on_residentTxt_editingFinished()
+{
+    mainTP.process.setResidentSize(ui->residentTxt->value());
+    //std::cout<<ui->residentTxt->value()<<std::endl;
+}
+
+void MainWindow::on_acMemTimeTxt_editingFinished()
+{
+    QString text=ui->acMemTimeTxt->text();
+    if(!text.isNull()&&!text.isEmpty()){
+        mainTP.virMemSys.setAccessMemTime((long long)text.toDouble());
+        //std::cout<<mainTP.virMemSys.accessMemTime.count()<<std::endl;
+    }
+}
+
+void MainWindow::on_acTLBTimeTxt_editingFinished()
+{
+    QString text=ui->acTLBTimeTxt->text();
+    if(!text.isNull()&&!text.isEmpty()){
+        mainTP.virMemSys.setAccessTLBTime((long long)text.toDouble());
+    }
+
+}
+
+void MainWindow::on_intrptTimeTxt_editingFinished()
+{
+    QString text=ui->intrptTimeTxt->text();
+    if(!text.isNull()&&!text.isEmpty()){
+        mainTP.virMemSys.setInterruptTime((long long)text.toDouble());
+    }
+}
+
+
+void MainWindow::on_addrManuTxt_textChanged()
+{
+
+     std::vector<std::string> strSeq=stool::split(ui->addrManuTxt->toPlainText().toStdString(),",");
+     std::vector<virm::LogicalAddr> seq;
+     unsigned tmpVal=0;
+     for(auto e:strSeq){
+        e=stool::trim(e);
+        if(stool::isLegalPattern(e)){
+            tmpVal=stool::hex2Dec(e);
+            seq.push_back(virm::LogicalAddr(
+                                tmpVal>>(virm::LogicalAddr::offsetDigits),
+                                tmpVal&((unsigned)(1<<virm::LogicalAddr::offsetDigits)-1)
+                              )
+                          );
+        }
+     }
+     if(seq.size()!=0){
+        mainTP.setSequence(seq);
+     }
+//     std::cout<<"edit"<<std::endl;
+//     for(auto e:seq){
+//         std::cout<<e.page<<std::endl;
+//     }
+}
+
+void MainWindow::on_addrCntTxt_editingFinished()
+{
+    genAddtAttrs.count=ui->addrCntTxt->text().toInt();
+}
+
+void MainWindow::on_addrLowLimTxt_editingFinished()
+{
+    QString text=ui->addrLowLimTxt->text();
+    if(!text.isNull()&&!text.isEmpty()){
+        if(stool::isLegalPattern(text.toStdString())){
+            genAddtAttrs.lower=stool::getMatchAddr(text.toStdString());
+        }
+    }
+}
+
+void MainWindow::on_addrGreatLimTxt_editingFinished()
+{
+    QString text=ui->addrGreatLimTxt->text();
+    if(!text.isNull()&&!text.isEmpty()){
+        if(stool::isLegalPattern(text.toStdString())){
+            genAddtAttrs.upper=stool::getMatchAddr(text.toStdString());
+        }
+    }
+}
+
+void MainWindow::on_addrGenerBtn_clicked()
+{
+    std::vector<virm::LogicalAddr> addrs =
+            virm::LogicalAddr::genAddrs(
+                genAddtAttrs.count,
+                stool::hex2Dec(genAddtAttrs.lower),
+                stool::hex2Dec(genAddtAttrs.upper)
+                );
+    mainTP.setSequence(addrs);
+}
+
+void MainWindow::displayNextStep(){
+    //std::cout<<1<<std::endl;
+}
+
+void MainWindow::addThreadBtnClicked(int id)
+{
+    id=0;
+    if(curThCnt<thCount){
+        QGroupBox* box=new QGroupBox(ui->addThreadGrp);
+        box->setObjectName("threadShowGrp_1");
+        box->setGeometry(
+                    ui->addThreadBtn_1->geometry().x(),
+                    ui->addThreadBtn_1->geometry().y(),
+                    ui->addThreadBtn_1->geometry().width(),
+                    ui->addThreadBtn_1->geometry().height()
+                    );
+
+        QTableWidget* table=new QTableWidget(box);
+        table->setObjectName("threadShowTbl_1");
+        table->setRowCount(20);
+        table->setColumnCount(2);
+        table->setHorizontalHeaderLabels(QStringList()<<"页号"<<"块号");
+        table->verticalHeader()->setHidden(true);
+        table->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+        table->setEditTriggers(QAbstractItemView::NoEditTriggers);
+        //table->setItem(0,0,new QTableWidgetItem("2"));
+
+        QPushButton* button=new QPushButton(box);
+        button->setObjectName("threadShowBtn_1");
+        button->setText("next");
+        connect(button,SIGNAL(clicked()),this,SLOT(displayNextStep()));
+
+        QVBoxLayout* vbLyt=new QVBoxLayout();
+        vbLyt->addWidget(table);
+        vbLyt->addWidget(button);
+        box->setLayout(vbLyt);
+
+        box->show();
+        table->show();
+        button->show();
+        ui->addThreadBtn_1->setVisible(false);
+    }
+}
+
+void MainWindow::on_loadFileBtn_clicked()
+{
+    //生成文件对话框
+    QFileDialog* fileDialog=new QFileDialog();
+    fileDialog->setWindowTitle(tr("选择文件"));
+    fileDialog->setDirectory(".");
+    fileDialog->setNameFilter(tr("Json(*.json)"));
+    fileDialog->setFileMode(QFileDialog::ExistingFiles);
+    fileDialog->setViewMode(QFileDialog::Detail);
+    QString fileName;
+    if(fileDialog->exec()){
+        fileName = fileDialog->selectedFiles()[0];
+    }
+    //读取.json
+    if(!fileName.isEmpty()&&!fileName.isNull()){
+        std::vector<std::string> vs=jsop::read(fileName.toStdString());
+        QString text;
+        for(int i=0;i<(int)vs.size();++i){
+           if(i!=0){
+               text.append(",");
+           }
+           text.append(QString::fromStdString(vs[i]));
+        }
+        ui->addrManuTxt->setText(text);
+//        std::vector<std::string> vs=jsop::read(fileName.toStdString());
+//        std::vector<virm::LogicalAddr> seq;
+//        unsigned val=0;
+//        for(auto e:vs){
+//          if(stool::isLegalPattern(e)){
+//            val=stool::hex2Dec(stool::getMatchAddr(e));
+//            seq.push_back(virm::LogicalAddr(
+//                              val>>virm::LogicalAddr::offsetDigits,
+//                              val&((unsigned)(1<<virm::LogicalAddr::offsetDigits)-1)
+//                              )
+//                          );
+//          }
+//        }
+//        //设置
+//        if(seq.size()!=0){
+//           mainTP.setSequence(seq);
+//           QString text;
+//           for(int i=0;i<(int)seq.size();++i){
+//               if(i!=0){
+//                   text.append(",");
+//               }
+//               text.append(QString::fromStdString(stool::dec2Hex(seq[i].getFullAddr())+"H"));
+//           }
+//           ui->addrManuTxt->setText(text);
+//        }
+    }
+}

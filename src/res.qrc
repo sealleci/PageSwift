@@ -1,0 +1,9 @@
+<RCC>
+    <qresource prefix="/style">
+        <file>group.qss</file>
+    </qresource>
+    <qresource prefix="/icon">
+        <file>res/icon/addThrdBtnIcon.svg</file>
+        <file>res/icon/file.svg</file>
+    </qresource>
+</RCC>

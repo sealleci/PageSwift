@@ -1,0 +1,73 @@
+#MainWindow{
+    background-color: #fff;
+}
+QGroupBox {
+     border: none;
+ }
+ QPushButton{
+     padding:8px;
+     background-color: #666;
+     color: #fff;
+     border-radius: 10px; /* future proofing */
+     text-align: center;
+     vertical-align: middle;
+     border: 1px solid transparent;
+     font-family:黑体;
+     font-size:125%;
+}
+QLabel{
+    padding:8px;
+    color: #444;
+    border-radius: 2px; /* future proofing */
+    text-align: center;
+    vertical-align: middle;
+    border: 1px solid transparent;
+    font-family: 等线;
+    font-size:18px;
+}
+#nsLbl_1,#nsLbl_2,#nsLbl_3{
+    padding:1px;
+    color: #666;
+    border-radius: 10px; /* future proofing */
+    text-align: center;
+    vertical-align: middle;
+    border: 3px solid;
+    border-color:#666;
+    font-family:Consolas;
+    font-weight:bold;
+}
+QHeaderView{
+    background:transparent;
+}
+QHeaderView::section{
+    font-size:18px;
+    font-family:"Microsoft YaHei";
+    color:#fff;
+
+    background:#666;
+    border:0px;
+    border-color:#fff;
+
+    min-height:48px;
+    max-height:48px;
+/*    margin-left:0px;
+    padding-left:0px;*/
+}
+QTableWidget{
+    background:#fff;
+    border:0px;
+
+    font-size:18px;
+    font-family:"Consolas";
+    color:#000;
+}
+#curPhy_1,#curPhy_2,#curPhy_3,#curPhy_4{
+    padding:8px;
+    background-color: #990099;
+    color: #fff;
+    text-align: center;
+    vertical-align: middle;
+    border: 0px solid transparent;
+    font-family:Consolas;
+    font-size:125%;
+}
